@@ -1,0 +1,54 @@
+import org.springframework.beans.factory.annotation.Autowired;  
+import org.springframework.http.ResponseEntity;  
+import org.springframework.web.bind.annotation.*;  
+import org.springframework.web.multipart.MultipartFile;  
+  
+@RestController  
+@RequestMapping("/api/users")  
+public class UserController {  
+    @Autowired  
+    private UserService userService;  
+  
+    @Autowired  
+    private ImgurService imgurService;  
+  
+    @PostMapping("/register")  
+    public ResponseEntity<User> registerUser(@RequestBody User user) {  
+        User registeredUser = userService.registerUser(user);  
+        return ResponseEntity.ok(registeredUser);  
+    }  
+  
+    // Endpoint to upload an image  
+    @PostMapping("/{username}/images")  
+    public ResponseEntity<String> uploadImage(@PathVariable String username, @RequestParam("image") MultipartFile image) {  
+        try {  
+            String imageUrl = imgurService.uploadImage(image);  
+            return ResponseEntity.ok("Image uploaded successfully: " + imageUrl);  
+        } catch (Exception e) {  
+            return ResponseEntity.status(500).body("Image upload failed: " + e.getMessage());  
+        }  
+    }  
+  
+    // Endpoint to view an image  
+    @GetMapping("/{username}/images/{imageId}")  
+    public ResponseEntity<String> viewImage(@PathVariable String username, @PathVariable String imageId) {  
+        try {  
+            String imageUrl = imgurService.viewImage(imageId);  
+            return ResponseEntity.ok("Image URL: " + imageUrl);  
+        } catch (Exception e) {  
+            return ResponseEntity.status(404).body("Image not found: " + e.getMessage());  
+        }  
+    }  
+  
+    // Endpoint to delete an image  
+    @DeleteMapping("/{username}/images/{imageId}")  
+    public ResponseEntity<String> deleteImage(@PathVariable String username, @PathVariable String imageId) {  
+        try {  
+            imgurService.deleteImage(imageId);  
+            return ResponseEntity.ok("Image deleted successfully");  
+        } catch (Exception e) {  
+            return ResponseEntity.status(500).body("Image deletion failed: " + e.getMessage());  
+        }  
+    }  
+}  
+ 
