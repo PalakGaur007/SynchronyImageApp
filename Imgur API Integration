@@ -1,0 +1,65 @@
+import org.springframework.beans.factory.annotation.Value;  
+import org.springframework.stereotype.Service;  
+import org.springframework.web.client.RestTemplate;  
+import org.springframework.web.multipart.MultipartFile;  
+import org.springframework.http.*;  
+import org.json.JSONObject;  
+  
+@Service  
+public class ImgurService {  
+  
+    @Value("${imgur.client.id}")  
+    private String clientId;  
+  
+    private final RestTemplate restTemplate = new RestTemplate();  
+  
+    // Method to upload an image  
+    public String uploadImage(MultipartFile image) throws Exception {  
+        String url = "https://api.imgur.com/3/upload";  
+        HttpHeaders headers = new HttpHeaders();  
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);  
+        headers.set("Authorization", "Client-ID " + clientId);  
+  
+        HttpEntity<MultipartFile> requestEntity = new HttpEntity<>(image, headers);  
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);  
+  
+        if (response.getStatusCode() == HttpStatus.OK) {  
+            JSONObject jsonResponse = new JSONObject(response.getBody());  
+            return jsonResponse.getJSONObject("data").getString("link");  
+        } else {  
+            throw new Exception("Failed to upload image: " + response.getStatusCode());  
+        }  
+    }  
+  
+    // Method to view an image  
+    public String viewImage(String imageId) throws Exception {  
+        String url = "https://api.imgur.com/3/image/" + imageId;  
+        HttpHeaders headers = new HttpHeaders();  
+        headers.set("Authorization", "Client-ID " + clientId);  
+  
+        HttpEntity<String> requestEntity = new HttpEntity<>(headers);  
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, requestEntity, String.class);  
+  
+        if (response.getStatusCode() == HttpStatus.OK) {  
+            JSONObject jsonResponse = new JSONObject(response.getBody());  
+            return jsonResponse.getJSONObject("data").getString("link");  
+        } else {  
+            throw new Exception("Failed to retrieve image: " + response.getStatusCode());  
+        }  
+    }  
+  
+    // Method to delete an image  
+    public void deleteImage(String imageId) throws Exception {  
+        String url = "https://api.imgur.com/3/image/" + imageId;  
+        HttpHeaders headers = new HttpHeaders();  
+        headers.set("Authorization", "Client-ID " + clientId);  
+  
+        HttpEntity<String> requestEntity = new HttpEntity<>(headers);  
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.DELETE, requestEntity, String.class);  
+  
+        if (response.getStatusCode() != HttpStatus.OK) {  
+            throw new Exception("Failed to delete image: " + response.getStatusCode());  
+        }  
+    }  
+}  
+ 
